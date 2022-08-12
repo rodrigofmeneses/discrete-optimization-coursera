@@ -22,7 +22,8 @@ def priority_value(input_data):
             value += item.value
             weight += item.weight
     
-    return parser_output(value, taken)
+    output_data = parser_output(value, taken)
+    return output_data
 
 def priority_weight(input_data):
     """ Greedly insert items in knapsack based on weight 
@@ -44,7 +45,8 @@ def priority_weight(input_data):
             value += item.value
             weight += item.weight
     
-    return parser_output(value, taken)
+    output_data = parser_output(value, taken)
+    return output_data
 
 def priority_density(input_data):
     """ Greedly insert items in knapsack based on density (value / weight)
@@ -66,7 +68,8 @@ def priority_density(input_data):
             value += item.value
             weight += item.weight
     
-    return parser_output(value, taken)
+    output_data = parser_output(value, taken)
+    return output_data
 
 def random_solution(input_data):
     """ Randomly insert items in knapsack
@@ -87,7 +90,8 @@ def random_solution(input_data):
             taken[item.index] = 1
             value += item.value
             weight += item.weight
-    return parser_output(value, taken)
+    output_data = parser_output(value, taken)
+    return output_data
 
 if __name__ == '__main__':
     import sys
