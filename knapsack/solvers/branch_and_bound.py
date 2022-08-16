@@ -22,20 +22,16 @@ class BranchAndBound:
         )
     
     def eval_value(self, state):
-        if isinstance(state, list):
-            return sum(
-                item.value * took if took != -1 else 0 
-                for item, took in zip(self.items, state)
-            )
-        return sum(item.value * took for item, took in zip(self.items, state.taken))
+        return sum(
+            item.value * took if took != -1 else 0 
+            for item, took in zip(self.items, state)
+        )
     
     def eval_room(self, state):
-        if isinstance(state, list):
-            return self.capacity - sum(
-                item.weight * took if took != -1 else 0
-                for item, took in zip(self.items, state) 
-            )
-        return self.capacity - sum(item.weight * took for item, took in zip(self.items, state.taken))
+        return self.capacity - sum(
+            item.weight * took if took != -1 else 0
+            for item, took in zip(self.items, state) 
+        )
     
     def eval_estimate(self, state):
         return sum( 
@@ -47,36 +43,20 @@ class BranchAndBound:
         '''If state taken has no free vars (representable by -1) the taken is a solution'''
         return not -1 in state.taken
 
-    def is_feasible(self, state):
-        '''If state taken is a solution and not break capacity constraint'''
-        if self.is_solution(state):
-            return state.capacity >= 0
-        return False
+    def is_infeasible(self, state):
+        '''If state break capacity constraint'''
+        return state.room < 0
 
     def DFS(self):
         stack = [self.best_state]
-        while stack:
-            current_state = stack.pop()
-            # Bound
-            # Has 3 types of bounds
-            # Optimality
-            # if solution is feasible and the value is best of current best
-            # Infeasibility
-            # if solution is infeasible
-            # Upper bound
-            # if best expectate of sulution is less of upper bound
-            # upper bound = sum of all values...
-            # if self.is_feasible(current_state):
-            #     if self.value(current_state) > self.value(self.best_state):
-            #         self.best_state = current_state
-
-
+        current_state = stack.pop()
+        while True:
             # Branch
             try:
                 index_branch = current_state.taken.index(-1)
             except ValueError:
-                print('Não ha mais para onde ramificar')
-                continue
+                # print('Não ha mais para onde ramificar')
+                break
             left = current_state.taken.copy()
             left[index_branch] = 1
             right = current_state.taken.copy()
@@ -101,6 +81,36 @@ class BranchAndBound:
             )
 
             # Bound
+            while True:
+                try:
+                    current_state = stack.pop()
+                except IndexError:
+                    # print('Não há mais nenhum nó a ser explorado!')
+                    break
+                
+                # Bound for infeasibility
+                if self.is_infeasible(current_state):
+                    # print('O estado atual é inviável, não há esperança de melhora ao ramificar')
+                    continue
+                # Bound for optimality
+                if current_state.estimate < self.best_state.value:
+                    # print('O estado atual tem uma estimativa PIOR que a melhor solução obtida')
+                    continue
+                if self.is_solution(current_state):
+                    if current_state.value > self.best_state.value:
+                        self.best_state = current_state
+                    continue
+                break
+        return parser_output(
+            self.best_state.value,
+            self.best_state.taken,
+            optimal=1
+        )
+            
+            
+
+
+            
 
 def main(input_data):
     bnb = BranchAndBound(input_data)
@@ -114,7 +124,7 @@ if __name__ == '__main__':
             input_data = input_data_file.read()
         # main(input_data)
         bnb = BranchAndBound(input_data)
-        bnb.DFS()
+        print(bnb.DFS())
         
     else:
         print('This test requires an input file.  Please select one from the data directory. (i.e. python solver.py ./data/ks_4_0)')
