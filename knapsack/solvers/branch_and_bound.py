@@ -33,7 +33,7 @@ class BranchAndBound:
             depth=0
         )
     
-    def eval_value(self, taken):
+    def eval_value(self, taken) -> int:
         """ Evaluate the objective function of state given a taken list, named by value.
         
         Args:
@@ -41,7 +41,7 @@ class BranchAndBound:
                 where in any index 0 if item is a not took, 1 if is took and -1 if is not decided.
         
         Retuns:
-            value (int): Value of state, internal product with replacement of -1 to 0,
+            Value of state, internal product with replacement of -1 to 0,
                 in knapsack problem is objective function.
         """
         return sum(
@@ -49,7 +49,7 @@ class BranchAndBound:
             for item, took in zip(self.items, taken)
         )
     
-    def eval_room(self, taken):
+    def eval_room(self, taken) -> int:
         """ Evaluate remain weigth in knapsack given a taken list, named by room.
 
         Args:
@@ -57,14 +57,14 @@ class BranchAndBound:
                 where in any index 0 if item is a not took, 1 if is took and -1 if is not decided.
             
         Returns:
-            room (int): Remain weigth in knapsack.
+            Remain weigth in knapsack.
         """
         return self.capacity - sum(
             item.weight * took if took != -1 else 0
             for item, took in zip(self.items, taken) 
         )
     
-    def eval_estimate(self, taken):
+    def eval_estimate(self, taken) -> float:
         """ Evaluate a optmistic estimate of value given a taken list,
                 this estimate is a relaxation of problem based on linear programming.
         
@@ -73,13 +73,13 @@ class BranchAndBound:
                 where in any index 0 if item is a not took, 1 if is took and -1 if is not decided.
         
         Returns:
-            estimate (float): Optimistic estimate of value, based of linear programming.
+            Optimistic estimate of value, based of linear programming.
         """
         bounds = [(0, 1) if bound == -1 else (bound, bound) for bound in taken]
         result = linprog(self.c, A_ub=self.A_ub, b_ub=self.b_ub, bounds=bounds)
         return 0 if result['fun'] == None else result['fun'] * -1
     
-    def is_solution(self, state):
+    def is_solution(self, state) -> bool:
         '''Evaluate if state is a solution.
                 Note: Just a solution, no guarantee that is viable.
         
@@ -87,11 +87,11 @@ class BranchAndBound:
             state (State): A namedtuple that represents a state of knapsack problem.
         
         Returns:
-            if_is_a_solution (bool): A boolean that indicates if the state is a solution.
+            A boolean that indicates if the state is a solution.
         '''
         return not -1 in state.taken
 
-    def is_feasible(self, state):
+    def is_feasible(self, state) -> bool:
         '''Evaluate if state is feasible.
                 Note: Based on capacity constraint, represented by room.
         
@@ -99,7 +99,7 @@ class BranchAndBound:
             state (State): A namedtuple that represents a state of knapsack problem.
 
         Returns:
-            if_state_is_feasible (bool): A boolean that indicates if the state is feasable.
+            A boolean that indicates if the state is feasable.
         '''
         return state.room >= 0
 
