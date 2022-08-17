@@ -107,24 +107,21 @@ class BranchAndBound:
             optimal=1
         )
             
-            
-
-
-            
-
 def main(input_data):
     bnb = BranchAndBound(input_data)
-
+    return bnb.DFS()
     
 if __name__ == '__main__':
     import sys
+    from time import perf_counter
     if len(sys.argv) > 1:
         file_location = sys.argv[1].strip()
         with open(file_location, 'r') as input_data_file:
             input_data = input_data_file.read()
-        # main(input_data)
-        bnb = BranchAndBound(input_data)
-        print(bnb.DFS())
+
+        elapsed_time = perf_counter()
+        print(main(input_data))
+        print('Total time:', perf_counter() - elapsed_time)
         
     else:
         print('This test requires an input file.  Please select one from the data directory. (i.e. python solver.py ./data/ks_4_0)')
