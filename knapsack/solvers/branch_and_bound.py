@@ -33,32 +33,86 @@ class BranchAndBound:
             depth=0
         )
     
-    def eval_value(self, state):
+    def eval_value(self, taken):
+        """ Evaluate the objective function of state given a taken list, named by value.
+        
+        Args:
+            taken (list): List of variables of len of knapsack with values 0, 1 or -1, 
+                where in any index 0 if item is a not took, 1 if is took and -1 if is not decided.
+        
+        Retuns:
+            value (int): Value of state, internal product with replacement of -1 to 0,
+                in knapsack problem is objective function.
+        """
         return sum(
             item.value * took if took != -1 else 0 
-            for item, took in zip(self.items, state)
+            for item, took in zip(self.items, taken)
         )
     
-    def eval_room(self, state):
+    def eval_room(self, taken):
+        """ Evaluate remain weigth in knapsack given a taken list, named by room.
+
+        Args:
+            taken (list): List of variables of len of knapsack with values 0, 1 or -1, 
+                where in any index 0 if item is a not took, 1 if is took and -1 if is not decided.
+            
+        Returns:
+            room (int): Remain weigth in knapsack.
+        """
         return self.capacity - sum(
             item.weight * took if took != -1 else 0
-            for item, took in zip(self.items, state) 
+            for item, took in zip(self.items, taken) 
         )
     
-    def eval_estimate(self, state):
-        bounds = [(0, 1) if bound == -1 else (bound, bound) for bound in state]
+    def eval_estimate(self, taken):
+        """ Evaluate a optmistic estimate of value given a taken list,
+                this estimate is a relaxation of problem based on linear programming.
+        
+        Args:
+            taken (list): List of variables of len of knapsack with values 0, 1 or -1, 
+                where in any index 0 if item is a not took, 1 if is took and -1 if is not decided.
+        
+        Returns:
+            estimate (float): Optimistic estimate of value, based of linear programming.
+        """
+        bounds = [(0, 1) if bound == -1 else (bound, bound) for bound in taken]
         result = linprog(self.c, A_ub=self.A_ub, b_ub=self.b_ub, bounds=bounds)
         return 0 if result['fun'] == None else result['fun'] * -1
     
     def is_solution(self, state):
-        '''If state taken has no free vars (representable by -1) the taken is a solution'''
+        '''Evaluate if state is a solution.
+                Note: Just a solution, no guarantee that is viable.
+        
+        Args:
+            state (State): A namedtuple that represents a state of knapsack problem.
+        
+        Returns:
+            if_is_a_solution (bool): A boolean that indicates if the state is a solution.
+        '''
         return not -1 in state.taken
 
-    def is_infeasible(self, state):
-        '''If state break capacity constraint'''
-        return state.room < 0
+    def is_feasible(self, state):
+        '''Evaluate if state is feasible.
+                Note: Based on capacity constraint, represented by room.
+        
+        Args:
+            state (State): A namedtuple that represents a state of knapsack problem.
+
+        Returns:
+            if_state_is_feasible (bool): A boolean that indicates if the state is feasable.
+        '''
+        return state.room >= 0
 
     def DFS(self):
+        ''' Branch based on Deep First Search. This approach mantains a stack of states and explore the tree based on depth search.
+                
+                'order_to_branch' is the order order of variables to explores based on density items, more density
+                items may explored first.
+                'depth' variable is the depth of tree that the state is.
+                'left' and 'right' are the childrens of current node.
+                The pruning is realized under three conditions, infeasible nodes, nodes domain for best solution
+                and node better than best solution.
+        '''
         stack = [self.best_state]
         current_state = stack.pop()
         order_to_branch = [item.index for item in sorted(self.items, key=attrgetter('density'), reverse=True)]
@@ -106,7 +160,7 @@ class BranchAndBound:
                     break
                 
                 # Bound for infeasibility
-                if self.is_infeasible(current_state):
+                if not self.is_feasible(current_state):
                     # print('O estado atual é inviável, não há esperança de melhora ao ramificar')
                     continue
                 # Bound for optimality
