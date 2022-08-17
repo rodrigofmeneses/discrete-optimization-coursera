@@ -1,4 +1,5 @@
 from collections import namedtuple
+from scipy.optimize import linprog
 from utils import parser_input, parser_output
 
 State = namedtuple('Knapsack', ['taken', 'value', 'room', 'estimate'])
@@ -11,8 +12,12 @@ class BranchAndBound:
     def __init__(self, input_data):
         # Knapsack instante
         self.item_count, self.capacity, self.items = parser_input(input_data)
+        # Linear Programming data
+        self.c = [-1 * item.value for item in self.items]
+        self.A_ub = [[item.weight for item in self.items]]
+        self.b_ub = [self.capacity]
         # Upper bound
-        self.best_estimate = sum(item.value for item in self.items)
+        self.best_estimate = self.eval_estimate([-1] * self.item_count)
         # Lower Bound
         self.best_state = State(
             taken=[-1] * self.item_count,
@@ -34,10 +39,9 @@ class BranchAndBound:
         )
     
     def eval_estimate(self, state):
-        return sum( 
-            item.value * took if took != -1 else item.value 
-            for item, took in zip(self.items, state)
-        )
+        bounds = [(0, 1) if bound == -1 else (bound, bound) for bound in state]
+        result = linprog(self.c, A_ub=self.A_ub, b_ub=self.b_ub, bounds=bounds)
+        return 0 if result['fun'] == None else result['fun'] * -1
     
     def is_solution(self, state):
         '''If state taken has no free vars (representable by -1) the taken is a solution'''
