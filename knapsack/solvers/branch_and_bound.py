@@ -1,14 +1,20 @@
 from collections import namedtuple
+from operator import attrgetter
 from scipy.optimize import linprog
-from utils import parser_input, parser_output
+from solvers.utils import parser_input, parser_output
 
-State = namedtuple('Knapsack', ['taken', 'value', 'room', 'estimate'])
+State = namedtuple('Knapsack', ['taken', 'value', 'room', 'estimate', 'depth'])
 # taken: items taken
 # value: sum of value of items taken
 # room: remain space in knapsack
 # estimate: optimistic estimate of value
 
 class BranchAndBound:
+    """Branch and Bound algorithm for knapsack 0/1 problem.
+    
+    Args:
+        input_data (str): The data of knapsack instance
+    """
     def __init__(self, input_data):
         # Knapsack instante
         self.item_count, self.capacity, self.items = parser_input(input_data)
@@ -23,7 +29,8 @@ class BranchAndBound:
             taken=[-1] * self.item_count,
             value=0,
             room=self.capacity,
-            estimate=self.best_estimate
+            estimate=self.best_estimate,
+            depth=0
         )
     
     def eval_value(self, state):
@@ -54,11 +61,14 @@ class BranchAndBound:
     def DFS(self):
         stack = [self.best_state]
         current_state = stack.pop()
+        order_to_branch = [item.index for item in sorted(self.items, key=attrgetter('density'), reverse=True)]
+        depth = current_state.depth
         while True:
             # Branch
             try:
-                index_branch = current_state.taken.index(-1)
-            except ValueError:
+                # index_branch = current_state.taken.index(-1)
+                index_branch = order_to_branch[depth]
+            except IndexError:
                 # print('Não ha mais para onde ramificar')
                 break
             left = current_state.taken.copy()
@@ -71,7 +81,8 @@ class BranchAndBound:
                     taken=right,
                     value=self.eval_value(right),
                     room=self.eval_room(right),
-                    estimate=self.eval_estimate(right)
+                    estimate=self.eval_estimate(right),
+                    depth=depth + 1
                 )
             )
 
@@ -80,7 +91,8 @@ class BranchAndBound:
                     taken=left,
                     value=self.eval_value(left),
                     room=self.eval_room(left),
-                    estimate=self.eval_estimate(left)
+                    estimate=self.eval_estimate(left),
+                    depth=depth + 1
                 )
             )
 
@@ -88,6 +100,7 @@ class BranchAndBound:
             while True:
                 try:
                     current_state = stack.pop()
+                    depth = current_state.depth
                 except IndexError:
                     # print('Não há mais nenhum nó a ser explorado!')
                     break
