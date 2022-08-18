@@ -2,41 +2,54 @@
 # -*- coding: utf-8 -*-
 
 from collections import namedtuple
+from solvers.greedy import priority_density, priority_value, priority_weight
+from solvers.dynamic_programming import dynamic_programming
+from solvers.branch_and_bound import BranchAndBound
 Item = namedtuple("Item", ['index', 'value', 'weight'])
+
+def greedy(input_data):
+    greedy_density = priority_density(input_data)
+    greedy_value = priority_value(input_data)
+    greedy_weight = priority_weight(input_data)
+    
+    density_objective = float(greedy_density.split()[0])
+    value_objective = float(greedy_value.split()[0])
+    weight_objective = float(greedy_weight.split()[0])
+
+    best_greedy = ''
+    best_greedy_value = 0
+
+    if density_objective > best_greedy_value:
+        best_greedy_value = density_objective
+        best_greedy = greedy_density
+    if value_objective > best_greedy_value:
+        best_greedy_value = value_objective
+        best_greedy = greedy_value
+    if weight_objective > best_greedy_value:
+        best_greedy_value = weight_objective
+        best_greedy = greedy_weight
+
+    return best_greedy
+
+def dp(input_data):
+    dp = dynamic_programming(input_data)
+    return dp
+
+def bnb(input_data):
+    bnb = BranchAndBound(input_data)
+    return bnb.DFS()
+
 
 def solve_it(input_data):
     # Modify this code to run your optimization algorithm
 
-    # parse the input
-    lines = input_data.split('\n')
-
-    firstLine = lines[0].split()
-    item_count = int(firstLine[0])
-    capacity = int(firstLine[1])
-
-    items = []
-
-    for i in range(1, item_count+1):
-        line = lines[i]
-        parts = line.split()
-        items.append(Item(i-1, int(parts[0]), int(parts[1])))
-
-    # a trivial algorithm for filling the knapsack
-    # it takes items in-order until the knapsack is full
-    value = 0
-    weight = 0
-    taken = [0]*len(items)
-
-    for item in items:
-        if weight + item.weight <= capacity:
-            taken[item.index] = 1
-            value += item.value
-            weight += item.weight
-    
-    # prepare the solution in the specified output format
-    output_data = str(value) + ' ' + str(0) + '\n'
-    output_data += ' '.join(map(str, taken))
-    return output_data
+    match int(input_data.split()[0]):
+        case 200:
+            return dp(input_data)
+        case 10000:
+            return greedy(input_data)
+        case _:
+            return bnb(input_data)
 
 
 if __name__ == '__main__':

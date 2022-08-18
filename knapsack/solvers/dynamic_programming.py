@@ -1,5 +1,5 @@
 import sys
-from utils import parser_input, parser_output
+from solvers.utils import parser_input, parser_output
 
 def fill_optimal_table(capacity, items):
     """ Fill the optimal table to avoid recursion.
@@ -27,6 +27,8 @@ def fill_optimal_table(capacity, items):
                     optimal_table[k][item.index - 1],
                     item.value + optimal_table[k - item.weight][item.index - 1]
                 )
+            else:
+                optimal_table[k][item.index] = optimal_table[k][item.index - 1]
     return optimal_table
 
 def trace(optimal_table, items):
@@ -66,12 +68,3 @@ def dynamic_programming(input_data):
 
     output_data = parser_output(value, taken, optimal=1)
     return output_data
-
-if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        file_location = sys.argv[1].strip()
-        with open(file_location, 'r') as input_data_file:
-            input_data = input_data_file.read()
-        print(dynamic_programming(input_data))
-    else:
-        print('This test requires an input file.  Please select one from the data directory. (i.e. python solver.py ./data/ks_4_0)')
